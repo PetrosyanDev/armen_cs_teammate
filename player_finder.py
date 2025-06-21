@@ -4,7 +4,6 @@ import random
 import logging
 from datetime import datetime, timedelta
 import asyncio
-import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters, ConversationHandler
 
@@ -221,7 +220,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
-    token = os.environ["BOT_TOKEN"]
+    token = "7628113009:AAHjVjN00kSN15S_Rxe5gPa2rWCK0kpvTS8"
     app = ApplicationBuilder().token(token).build()
 
     conv = ConversationHandler(
