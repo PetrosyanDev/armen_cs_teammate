@@ -1,0 +1,69 @@
+{
+  "7891954846": {
+    "premier_rating": 4000,
+    "wingman_rank": "MG",
+    "favorite_maps": [
+      "Mirage",
+      "Dust II",
+      "Inferno",
+      "Nuke"
+    ],
+    "talkative": true,
+    "preferred_role": "Entry",
+    "microphone": true,
+    "available_hours": "18:00-22:00",
+    "team_type": "Team",
+    "language": "Russian",
+    "aggressiveness": 3,
+    "daily_rating": {
+      "2025-06-19": 9191
+    },
+    "daily_teammate": {},
+    "last_updated": "2025-06-19T22:36:25.592204",
+    "username": "@Armen_px"
+  },
+  "6453389132": {
+    "premier_rating": 100000,
+    "wingman_rank": "global elite",
+    "favorite_maps": [
+      "Nuke"
+    ],
+    "talkative": false,
+    "preferred_role": "Entry",
+    "microphone": false,
+    "available_hours": "18:00",
+    "team_type": "Team",
+    "language": "Russian",
+    "aggressiveness": 5,
+    "daily_rating": {
+      "2025-06-19": 8532
+    },
+    "daily_teammate": {},
+    "last_updated": "2025-06-19T22:27:08.530576",
+    "username": "@unknown"
+  },
+  "993193446": {
+    "premier_rating": 4000,
+    "wingman_rank": "MG",
+    "favorite_maps": [
+      "Mirage",
+      "Nuke",
+      "Dust II",
+      "Inferno",
+      "Vertigo"
+    ],
+    "talkative": true,
+    "preferred_role": "Support",
+    "microphone": true,
+    "available_hours": "18:00-23:00",
+    "team_type": "Team",
+    "language": "Russian",
+    "aggressiveness": 3,
+    "daily_rating": {
+      "2025-06-19": 9402
+    },
+    "daily_teammate": {},
+    "last_updated": "2025-06-19T22:35:12.570037",
+    "username": "@dust12341"
+  }
+}
