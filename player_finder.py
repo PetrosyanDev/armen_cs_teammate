@@ -1,16 +1,16 @@
+# CS2 Teammate Finder Bot – Cleaned for PTB v21+
+
 import json
 import random
 import logging
 from datetime import datetime, timedelta
 import asyncio
-import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     CallbackQueryHandler, ContextTypes, ConversationHandler, filters
 )
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 
 USER_FILE = "cs2_teammates.json"
