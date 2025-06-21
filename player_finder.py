@@ -7,6 +7,13 @@ import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters, ConversationHandler
 
+
+
+import sys
+print("🚀 Python version:", sys.version)
+
+
+
 # Logging
 logging.basicConfig(level=logging.INFO)
 
