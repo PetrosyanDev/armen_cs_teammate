@@ -210,7 +210,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ----- Main App -----
 def main():
-    app = Application.builder().token("7628113009:AAF68h2wmv-arBvzpRwv1O8UFjgZtfKC6dM").build()
+    app = Application.builder().token("7628113009:AAErZAInjqiX9s2LYoAH7kpyhjRgHs6IiFE").build()
 
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
