@@ -1,18 +1,14 @@
-# cs2_teammate_bot.py
 import json
 import random
 import logging
 from datetime import datetime, timedelta
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters, ConversationHandler
-
-
-
-import sys
-print("🚀 Python version:", sys.version)
-
-
+import os
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from telegram.ext import (
+    Application, CommandHandler, MessageHandler,
+    CallbackQueryHandler, ContextTypes, ConversationHandler, filters
+)
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -22,102 +18,79 @@ MATCH_LOG = {}
 
 (PREMIER, WINGMAN, MAPS, TALKATIVE, ROLE, MIC, HOURS, TEAM_TYPE, LANGUAGE, AGGRO) = range(10)
 
-CS2_MAPS = ["Mirage", "Inferno", "Nuke", "Overpass", "Vertigo", "Ancient", "Anubis", "Dust II", "Cache", "Train"]
+CS2_MAPS = [
+    "Mirage", "Inferno", "Nuke", "Overpass", "Vertigo", "Ancient", "Anubis", "Dust II", "Cache", "Train"
+]
 ROLES = ["Entry", "Support", "AWPer", "Lurker", "IGL"]
+LANGUAGES = ["English", "Russian"]
 
-# Start
+# ----- Start Conversation -----
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
     await update.message.reply_text("Welcome! Let's build your CS2 profile.\nWhat is your Premier rating?")
     return PREMIER
 
-async def collect_premier(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        context.user_data['premier_rating'] = int(update.message.text)
-        await update.message.reply_text("What is your Wingman rank (MG, DMG, GE, etc.)?")
-        return WINGMAN
-    except ValueError:
-        await update.message.reply_text("❌ Enter a number (e.g., 9700)")
-        return PREMIER
+async def ask_wingman(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['premier_rating'] = int(update.message.text)
+    await update.message.reply_text("What is your Wingman rating?")
+    return WINGMAN
 
-async def collect_wingman(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data['wingman_rank'] = update.message.text
-    await update.message.reply_text("Favorite maps? (comma-separated)\nChoose from: " + ", ".join(CS2_MAPS))
+async def ask_maps(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['wingman_rating'] = int(update.message.text)
+    keyboard = [[KeyboardButton(m)] for m in CS2_MAPS]
+    await update.message.reply_text("Choose your favorite map (send one per message, type /done when finished):",
+                                    reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+    context.user_data['favorite_maps'] = []
     return MAPS
 
-async def collect_maps(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    maps = [m.strip() for m in update.message.text.split(',') if m.strip()]
-    if not maps:
-        await update.message.reply_text("❌ Enter at least one map.")
-        return MAPS
-    context.user_data['favorite_maps'] = maps
-    keyboard = [[InlineKeyboardButton("Yes", callback_data='talkative_yes'), InlineKeyboardButton("No", callback_data='talkative_no')]]
-    await update.message.reply_text("Are you talkative?", reply_markup=InlineKeyboardMarkup(keyboard))
+async def collect_map(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.text in CS2_MAPS:
+        context.user_data['favorite_maps'].append(update.message.text)
+    return MAPS
+
+async def done_maps(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Are you talkative in voice chat? (yes/no)")
     return TALKATIVE
 
-async def talkative_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    context.user_data['talkative'] = query.data == 'talkative_yes'
-    keyboard = [[InlineKeyboardButton(role, callback_data=role)] for role in ROLES]
-    await query.edit_message_text("Preferred role?", reply_markup=InlineKeyboardMarkup(keyboard))
+async def ask_role(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['talkative'] = update.message.text.lower() == 'yes'
+    keyboard = [[KeyboardButton(r)] for r in ROLES]
+    await update.message.reply_text("What is your preferred role?",
+                                    reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
     return ROLE
 
-async def role_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    context.user_data['preferred_role'] = query.data
-    keyboard = [[InlineKeyboardButton("Yes", callback_data='mic_yes'), InlineKeyboardButton("No", callback_data='mic_no')]]
-    await query.edit_message_text("Do you have a microphone?", reply_markup=InlineKeyboardMarkup(keyboard))
+async def ask_mic(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['preferred_role'] = update.message.text
+    await update.message.reply_text("Do you have a microphone? (yes/no)")
     return MIC
 
-async def mic_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    context.user_data['microphone'] = query.data == 'mic_yes'
-    await query.edit_message_text("What are your available hours? (e.g., 18:00–23:00)")
+async def ask_hours(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['microphone'] = update.message.text.lower() == 'yes'
+    await update.message.reply_text("What hours are you available to play? (e.g., 18:00-22:00)")
     return HOURS
 
-async def collect_hours(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ask_team_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['available_hours'] = update.message.text
-    keyboard = [[InlineKeyboardButton("Duo", callback_data='Duo'), InlineKeyboardButton("Team", callback_data='Team')]]
-    await update.message.reply_text("Looking for Duo or Team?", reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text("Do you want to play Premier or Wingman?")
     return TEAM_TYPE
 
-async def team_type_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    context.user_data['team_type'] = query.data
-    keyboard = [[InlineKeyboardButton("English", callback_data='English'), InlineKeyboardButton("Russian", callback_data='Russian')]]
-    await query.edit_message_text("Preferred language?", reply_markup=InlineKeyboardMarkup(keyboard))
+async def ask_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['team_type'] = update.message.text
+    keyboard = [[KeyboardButton(lang)] for lang in LANGUAGES]
+    await update.message.reply_text("Preferred communication language:",
+                                    reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
     return LANGUAGE
 
-async def language_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    context.user_data['language'] = query.data
-    await query.edit_message_text("Rate your aggressiveness (1–5)")
+async def ask_aggro(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['language'] = update.message.text
+    await update.message.reply_text("Do you prefer aggressive teammates? (yes/no)")
     return AGGRO
 
-async def collect_aggro(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        value = int(update.message.text)
-        if not 1 <= value <= 5:
-            raise ValueError
-        context.user_data['aggressiveness'] = value
-    except ValueError:
-        await update.message.reply_text("❌ Enter 1–5")
-        return AGGRO
-
+async def save_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['aggressive_preference'] = update.message.text.lower() == 'yes'
     user_id = str(update.message.from_user.id)
-    username = update.message.from_user.username or "unknown"
-    today = datetime.today().strftime("%Y-%m-%d")
-
-    context.user_data.update({
-        'daily_rating': {today: random.randint(8000, 10000)},
-        'daily_teammate': {},
-        'last_updated': datetime.now().isoformat(),
-        'username': f"@{username}"
-    })
+    username = update.message.from_user.username or f"user_{user_id}"
+    context.user_data['username'] = username
 
     try:
         with open(USER_FILE, "r", encoding="utf-8") as f:
@@ -125,25 +98,26 @@ async def collect_aggro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         users = {}
 
-    users[user_id] = context.user_data
+    users[user_id] = context.user_data.copy()
+
     with open(USER_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
-    await update.message.reply_text("✅ Profile saved!")
+    await update.message.reply_text("✅ Profile saved successfully!")
     return ConversationHandler.END
 
-# Matchmaking + Rating
+# ----- Matchmaking Logic -----
 async def find_teammate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
     try:
         with open(USER_FILE, "r", encoding="utf-8") as f:
             users = json.load(f)
     except:
-        await update.message.reply_text("❌ Could not load data.")
+        await update.message.reply_text("❌ Could not load user data.")
         return
 
     if user_id not in users:
-        await update.message.reply_text("⚠️ Use /start in DM first.")
+        await update.message.reply_text("⚠️ You haven't set up your profile yet. Use /start in DM.")
         return
 
     current = users[user_id]
@@ -178,31 +152,38 @@ async def find_teammate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if top_matches:
         reply = "\n\n".join([
-            f"🔹 {m['username']}\nRating: {m['premier_rating']} | Role: {m['preferred_role']}\nMaps: {', '.join(m['favorite_maps'])}\n"
-            f"Talkative: {'Yes' if m['talkative'] else 'No'} | Mic: {'Yes' if m['microphone'] else 'No'}\n"
-            f"Ratings: 👍 {m.get('ratings', {}).get('very_friendly', 0)} | 🎯 {m.get('ratings', {}).get('good_player', 0)} | 🚫 {m.get('ratings', {}).get('didnt_choose', 0)} | ❌ {m.get('ratings', {}).get('no_show', 0)}"
-            for _, m in top_matches
+            f"🔹 {match['username']}\nRating: {match['premier_rating']} | Role: {match['preferred_role']}\nMaps: {', '.join(match['favorite_maps'])}\n"
+            f"Talkative: {'Yes' if match['talkative'] else 'No'} | Mic: {'Yes' if match['microphone'] else 'No'}\n"
+            f"Ratings: 👍 {match.get('ratings', {}).get('very_friendly', 0)} | 🎯 {match.get('ratings', {}).get('good_player', 0)} | 🚫 {match.get('ratings', {}).get('didnt_choose', 0)} | ❌ {match.get('ratings', {}).get('no_show', 0)}"
+            for _, match in top_matches
         ])
         await update.message.reply_text(f"🎯 Top teammate suggestions:\n\n{reply}")
-        MATCH_LOG[user_id] = {"time": datetime.now(), "teammates": [t[1]['username'] for t in top_matches]}
-        await schedule_review_prompt(update, context, user_id, MATCH_LOG[user_id]["teammates"])
-    else:
-        await update.message.reply_text("❌ No teammates found.")
 
-async def schedule_review_prompt(update, context, user_id, teammates):
-    await asyncio.sleep(2700)
+        MATCH_LOG[user_id] = {
+            "time": datetime.now(),
+            "teammates": [t[1]['username'] for t in top_matches]
+        }
+        await schedule_review_prompt(context, user_id, MATCH_LOG[user_id]["teammates"])
+
+    else:
+        await update.message.reply_text("❌ No suitable teammates found.")
+
+# ----- 45-Minute Review Prompt -----
+async def schedule_review_prompt(context, user_id, teammates):
+    await asyncio.sleep(2700)  # 45 minutes
     keyboard = [
         [InlineKeyboardButton("✅ Very friendly teammate", callback_data=f"rate:{teammates[0]}:very_friendly")],
         [InlineKeyboardButton("🎯 Good playing teammate", callback_data=f"rate:{teammates[0]}:good_player")],
         [InlineKeyboardButton("🚫 Didn't choose him", callback_data=f"rate:{teammates[0]}:didnt_choose")],
         [InlineKeyboardButton("❌ Didn't show up", callback_data=f"rate:{teammates[0]}:no_show")]
     ]
-    await context.bot.send_message(chat_id=int(user_id), text=f"⏱ 45 minutes ago we matched you with {teammates[0]}\nHow was it?", reply_markup=InlineKeyboardMarkup(keyboard))
+    await context.bot.send_message(chat_id=int(user_id), text=f"⏱ 45 minutes ago we matched you with {teammates[0]}\nHow was the experience?", reply_markup=InlineKeyboardMarkup(keyboard))
 
+# ----- Rating Handler -----
 async def handle_rating(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    _, username, rating = query.data.split(":")
+    _, teammate_username, rating = query.data.split(":")
 
     try:
         with open(USER_FILE, "r", encoding="utf-8") as f:
@@ -211,7 +192,7 @@ async def handle_rating(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await query.edit_message_text("⚠️ Could not update rating.")
 
     for uid, data in users.items():
-        if data.get("username") == username:
+        if data.get("username") == teammate_username:
             if "ratings" not in data:
                 data["ratings"] = {}
             data["ratings"][rating] = data["ratings"].get(rating, 0) + 1
@@ -220,29 +201,30 @@ async def handle_rating(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with open(USER_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
-    await query.edit_message_text(f"✅ Thanks for your feedback on {username}!")
+    await query.edit_message_text(f"✅ Thank you for your feedback on {teammate_username}!")
 
+# ----- Cancel -----
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Cancelled.")
     return ConversationHandler.END
 
+# ----- Main App -----
 def main():
-    token = "7628113009:AAHjVjN00kSN15S_Rxe5gPa2rWCK0kpvTS8"
-    app = ApplicationBuilder().token(token).build()
+    app = Application.builder().token("7628113009:AAHjVjN00kSN15S_Rxe5gPa2rWCK0kpvTS8").build()
 
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            PREMIER: [MessageHandler(filters.TEXT & ~filters.COMMAND, collect_premier)],
-            WINGMAN: [MessageHandler(filters.TEXT & ~filters.COMMAND, collect_wingman)],
-            MAPS: [MessageHandler(filters.TEXT & ~filters.COMMAND, collect_maps)],
-            TALKATIVE: [CallbackQueryHandler(talkative_handler)],
-            ROLE: [CallbackQueryHandler(role_handler)],
-            MIC: [CallbackQueryHandler(mic_handler)],
-            HOURS: [MessageHandler(filters.TEXT & ~filters.COMMAND, collect_hours)],
-            TEAM_TYPE: [CallbackQueryHandler(team_type_handler)],
-            LANGUAGE: [CallbackQueryHandler(language_handler)],
-            AGGRO: [MessageHandler(filters.TEXT & ~filters.COMMAND, collect_aggro)]
+            PREMIER: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_wingman)],
+            WINGMAN: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_maps)],
+            MAPS: [CommandHandler("done", done_maps), MessageHandler(filters.TEXT & ~filters.COMMAND, collect_map)],
+            TALKATIVE: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_role)],
+            ROLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_mic)],
+            MIC: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_hours)],
+            HOURS: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_team_type)],
+            TEAM_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_language)],
+            LANGUAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_aggro)],
+            AGGRO: [MessageHandler(filters.TEXT & ~filters.COMMAND, save_user)],
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
