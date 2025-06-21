@@ -1,8 +1,10 @@
+# cs2_teammate_bot.py
 import json
 import random
 import logging
 from datetime import datetime, timedelta
 import asyncio
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters, ConversationHandler
 
@@ -182,7 +184,7 @@ async def find_teammate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ No teammates found.")
 
 async def schedule_review_prompt(update, context, user_id, teammates):
-    await asyncio.sleep(2700)  # 45 min
+    await asyncio.sleep(2700)
     keyboard = [
         [InlineKeyboardButton("✅ Very friendly teammate", callback_data=f"rate:{teammates[0]}:very_friendly")],
         [InlineKeyboardButton("🎯 Good playing teammate", callback_data=f"rate:{teammates[0]}:good_player")],
@@ -219,7 +221,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
-    app = ApplicationBuilder().token("7628113009:AAHjVjN00kSN15S_Rxe5gPa2rWCK0kpvTS8").build()
+    token = os.environ["BOT_TOKEN"]
+    app = ApplicationBuilder().token(token).build()
 
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
