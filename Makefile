@@ -3,7 +3,10 @@ TAG=latest
 SERVER=erik@165.227.148.29
 SERVER_DIR=/home/erik/cs2-bot
 
-.PHONY: test build upload deploy clean
+.PHONY: run test build upload deploy clean
+
+run:
+	python player_finder.py
 
 test:
 	python -m py_compile player_finder.py
