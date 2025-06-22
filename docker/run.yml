@@ -12,6 +12,8 @@ services:
         networks:
             - internal_net
         command: python player_finder.py
+        volumes:
+            - ./cs2_teammates.json:/app/cs2_teammates.json
 
 networks:
     internal_net:
