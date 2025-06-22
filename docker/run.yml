@@ -1,0 +1,18 @@
+# Erik Petrosyan ©
+version: '3.8'
+
+services:
+    cs2-bot:
+        image: ${IMG}:${TAG}
+        user: erik:erik
+        deploy:
+            replicas: 1
+        environment:
+            - BOT_TOKEN=${BOT_TOKEN}
+        networks:
+            - internal_net
+        command: python player_finder.py
+
+networks:
+    internal_net:
+        driver: overlay

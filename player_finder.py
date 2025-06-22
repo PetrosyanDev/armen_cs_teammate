@@ -5,6 +5,7 @@ import random
 import logging
 from datetime import datetime, timedelta
 import asyncio
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
@@ -210,7 +211,11 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ----- Main App -----
 def main():
-    app = Application.builder().token("7628113009:AAF5qeGTzcRfCCuPbkmBdKOV_utO6a81-h8").build()
+    token = os.environ.get("BOT_TOKEN")
+    if not token:
+        raise RuntimeError("BOT_TOKEN environment variable not set")
+
+    app = Application.builder().token(token).build()
 
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],

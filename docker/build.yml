@@ -1,0 +1,11 @@
+# Erik Petrosyan ©
+version: '3.8'
+
+services:
+    cs2-bot:
+        container_name: ${IMG}
+        build:
+            context: ../
+            dockerfile: ./docker/Dockerfile
+            target: main
+        image: ${IMG}:${TAG}
