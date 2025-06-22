@@ -1,0 +1,10 @@
+# environment files
+.env
+.envrc
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Data files
+cs2_teammates.json

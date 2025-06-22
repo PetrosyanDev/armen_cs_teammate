@@ -1,0 +1,2 @@
+# Example environment configuration for direnv
+export BOT_TOKEN="your-telegram-token"
